@@ -70,7 +70,6 @@ else if (inByte == 'B') //if incoming byte is 'B'...
     digitalWrite(led3, LOW);
   }
 
-  // SMALL RHYTHM
    else if (val < 120)
   {
     digitalWrite(led1, HIGH);
@@ -92,7 +91,6 @@ else if (inByte == 'B') //if incoming byte is 'B'...
     delay(20);
   }
 
-  // MEDIUM ENERGY
    else if (val < 200)
   {
     digitalWrite(led1, HIGH);
@@ -108,7 +106,6 @@ else if (inByte == 'B') //if incoming byte is 'B'...
     delay(30);
   }
 
-  // BIG BEAT
   else
   {
     digitalWrite(led1, HIGH);
