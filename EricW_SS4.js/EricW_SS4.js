@@ -123,7 +123,6 @@ function portOpen()
   console.log("Serial Port Opened");
 }
 
-// SERIAL ERROR FUNCTION
 function portError(err)
 {
   console.log("Serial Error: ", err);

@@ -21,8 +21,7 @@ void setup()
 
 void loop()
 {
-  // SERIAL FORMAT:
-  // value1,value2
+  
 
   if (Serial.available() > 0)
   {
