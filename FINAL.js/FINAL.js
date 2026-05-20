@@ -56,7 +56,7 @@ let currentSong = 1;
 let soundReady = false;
 
 // BUTTON PRESS COUNTER
-let pressCount = 0;
+//let pressCount = 0;
 
 // shirt glow
 let shirtGlow = 0;
@@ -64,6 +64,12 @@ let shirtGlow = 0;
 // SERIAL + FFT
 let serial;
 let fft;
+let portName = '/dev/tty.usbserial-1110';
+let options = { baudRate: 9600};
+let rxFlag = false;
+let firstContact = false;
+let sensors = [0, 0, 0, 0];
+let button1 = 0;
 
 function setup() {
   createCanvas(800, 600);
@@ -102,14 +108,15 @@ function setup() {
   serial.on('error', serialError);          // set callback for errors
   serial.on('close', portClose);            // set callback for closing the port
   serial.list();                            // list the serial ports
-  //serial.open(portName, options);           // open a serial port
+  serial.open(portName, options);           // open a serial port
  
-  serial.open("/dev/tty.usbserial-1110");
+  //serial.open("/dev/tty.usbserial-1110");
 
   // FFT
   fft = new p5.FFT();
 
   fft.setInput(song1);
+  fft.setInput(song2);
 
 }
 
@@ -176,14 +183,14 @@ function draw() {
 
     if (frameCount % 20 == 0)
     {
-      serial.write("M" + musicValue + "\n");
+      serial.write(musicValue);
     }
 
   } else {
 
     if (frameCount % 20 == 0)
     {
-      serial.write("M0\n");
+      serial.write(0);
     }
 
   }
@@ -479,6 +486,10 @@ function keyPressed() {
   if (key==='b'||key==='B') bg=random(255);
 
   // SPACEBAR MUSIC CONTROL REMOVED
+  // if (key===' '){
+  //   opening=true;
+  //   if (soundReady && openSound && !openSound.isPlaying()) openSound.loop();
+  // }
 
 
   // SWITCH SONG
@@ -505,9 +516,12 @@ function keyPressed() {
   if (n>=1 && n<=4) setMoodSmooth(n);
 }
 
-function keyReleased() {
-
-}
+// function keyReleased() {
+//   if (key===' '){
+//     opening=false;
+//     if (soundReady && openSound && openSound.isPlaying()) openSound.stop();
+//   }
+// }
 
 function setMoodSmooth(n){
   if(n===toMoodIndex)return;
@@ -541,7 +555,7 @@ function portOpen()
   print("SERIAL PORT OPEN");
 // handshaking
 
-  serial.write("A\n");
+  serial.write('A');
 }
 
 function portClose()
@@ -559,57 +573,76 @@ function printList(portList)
   }
 }
 
+
 function serialEvent()
 {
   let incoming = serial.readLine().trim();
 
-  print("SERIAL:", incoming);
-
-  //Button press
-  if (incoming == "1")
+  if (incoming.length > 0)
   {
-    print("BUTTON PRESSED");
+    let values = split(incoming, ",");
 
-    let activeSong = (currentSong == 1) ? song1 : song2;
-
-    // Stop current song
-    if (activeSong && activeSong.isPlaying())
+    if (values.length >= 2)
     {
-      activeSong.stop();
+      button1 = int(values[0]);
 
-      opening = false;
+      let ledValue = int(values[1]);
 
-      // Switch song
-      if (currentSong == 1)
+      print("BUTTON:", button1);
+      print("LED VALUE:", ledValue);
+
+      if (button1 == 1)
       {
-        currentSong = 2;
+        // SONG 1 PLAY
+        if (currentSong == 1)
+        {
+          fft.setInput(song1);
+
+          song1.loop();
+
+          opening = true;
+
+          currentSong = 0;
+        }
+
+        // STOP AFTER SONG 1
+        else if (currentSong == 0)
+        {
+          song1.stop();
+
+          opening = false;
+
+          currentSong = 2;
+        }
+
+        // SONG 2 PLAY
+        else if (currentSong == 2)
+        {
+          fft.setInput(song2);
+
+          song2.loop();
+
+          opening = true;
+
+          currentSong = 3;
+        }
+
+        // STOP AFTER SONG 2 + RESET
+        else if (currentSong == 3)
+        {
+          song2.stop();
+
+          opening = false;
+
+          currentSong = 1;
+        }
       }
-      else
-      {
-        currentSong = 1;
-      }
-
-      print("NEXT SONG: " + currentSong);
-    }
-
-    // Play current song
-    else
-    {
-      activeSong = (currentSong == 1) ? song1 : song2;
-
-      fft.setInput(activeSong);
-
-      activeSong.loop();
-
-      opening = true;
-
-      print("PLAYING SONG: " + currentSong);
     }
   }
 
-  // Next song request
-  serial.write("A\n");
+  serial.write('A');
 }
+
 
 function serialError(err)
 {
